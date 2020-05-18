@@ -2,6 +2,8 @@ import random
 
 STEVILO_DOVOLJENIH_NAPAK = 10
 
+ZACETEK = 'Z'   #moramo imeti na zacetku da lahko damo potem 'new game'
+
 #konstante za razultate ugibanj
 PRAVILNA_CRKA = '+'
 PONOVLJENA_CRKA = 'o'
@@ -104,6 +106,45 @@ def nova_igra():
     nakljucna_beseda = random.choice(bazen_besed)
     return Igra(nakljucna_beseda)
     
+class Vislice:
+    #skrbi za trenutno stanje VEČ iger(imel bo več objetkov tipa Igra = imeli bomo več iger/večkrat bomo igrali to igrico)
+    def __init__(self):
+        #Slovar, ki ID-ju priredi objekt njegove igre
+        self.igre = {}  #  int  -> (Igra, stanje v igri(a smo na zacetku igre al smo zgubl al smo zmagal))
 
+    def prost_id_igre(self):
+        #vrne nek id, ki ga ne uporablja nobena igra
+        # (vsakic ko zacnemo igrati novo igro ima ta igra nov id
+        # (idja nima uporabnik ker vsak uporabnik lahko igra vec iger))
 
+        if len(self.igre) == 0:
+            return 0
+        else:
+            return max(self.igre.keys()) + 1
+            # lahko bi tudi return len(self.igre.keys())
+
+    #nova_igra nam more nardit novo igro, zgenerirat id in to dat use uporabniku
+    def nova_igra(self):
+
+        # dobimo svež id:
+        nov_id = self.prost_id_igre()
+
+        # naredimo novo igro(bomo nardil s pomocjo metode nova_igra iz prejsnjega razreda):
+        sveza_igra = nova_igra()
+
+        # vse to shranimo v self.igre:
+        self.igre[nov_id] = (sveza_igra, ZACETEK)
+
+        #vrnemo nov id:
+        return nov_id
+
+    def ugibaj(self, id_igre, crka):
+        # Damo staro igro ven
+        trenutna_igra, _ = self.igre[id_igre]
+
+        # Ugibamo crko, dobimo novo stanje
+        novo_stanje = trenutna_igra.ugibaj(crka)
+
+        # Zapišemo posodobljeno stanje in igro nazaj v 'BAZO'
+        self.igre[id_igre] = (trenutna_igra, novo_stanje)
 
