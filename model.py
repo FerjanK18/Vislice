@@ -1,4 +1,5 @@
 import random
+import json
 
 STEVILO_DOVOLJENIH_NAPAK = 10
 
@@ -23,8 +24,8 @@ class Igra:
         if crke is None:
             self.crke = []    #ta pogojni stavek smo nardil zato da se program ne sesuje ce tisto kar vnese igralec slucajno niso crke
         else:
-            self.crke = crke.lower()     #seznam crke [dosedanji poskusi igralca]
-
+            self.crke = [c.lower() for c in crke]     #seznam crke [dosedanji poskusi igralca]
+# c.lower()
     def napacne_crke(self):
         napacne = []
         for crka in self.crke:
@@ -125,7 +126,7 @@ class Vislice:
 
     #nova_igra nam more nardit novo igro, zgenerirat id in to dat use uporabniku
     def nova_igra(self):
-
+        self.preberi_iz_datoteke()
         # dobimo svež id:
         nov_id = self.prost_id_igre()
 
@@ -135,11 +136,13 @@ class Vislice:
         # vse to shranimo v self.igre:
         self.igre[nov_id] = (sveza_igra, ZACETEK)
 
+        self.shrani_v_datoteko()
         #vrnemo nov id:
         return nov_id
 
     def ugibaj(self, id_igre, crka):
         # Damo staro igro ven
+        self.preberi_iz_datoteke()
         trenutna_igra, _ = self.igre[id_igre]
 
         # Ugibamo crko, dobimo novo stanje
@@ -148,3 +151,23 @@ class Vislice:
         # Zapišemo posodobljeno stanje in igro nazaj v 'BAZO'
         self.igre[id_igre] = (trenutna_igra, novo_stanje)
 
+        self.shrani_v_datoteko()
+
+    def shrani_v_datoteko(self):
+        #{id_igre : ((geslo, ugibane_crke), stanje_igre)}
+        #slovar priblizne oblike: {1 : (('balkon', 'bvasdfv'), '+'), 2 : (), 5 : ()}
+
+        igre = {}
+        for id_igre, (igra, stanje) in self.igre.items():   #id_igre, (Igra, stanje)
+            igre[id_igre] = ((igra.geslo, igra.crke), stanje)
+        print(igre)
+        with open('Vislice/stanje_iger.json', 'w') as out_file:
+            json.dump(igre, out_file)
+
+    def preberi_iz_datoteke(self):
+        with open('Vislice/stanje_iger.json', 'r') as in_file:
+            igre = json.load(in_file)  #mogoce bi to preimenovali v igre_iz_diska
+
+        self.igre = {}
+        for id_igre, ((geslo, crke), stanje) in igre.items():
+            self.igre[int(id_igre)] = Igra(geslo, crke), stanje
